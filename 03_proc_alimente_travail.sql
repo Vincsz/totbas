@@ -12,8 +12,8 @@
 --   rafraîchi en phase 1). Comparaisons insensibles à la casse.
 --
 -- Règles :
---   APSQL + TOTO2I :
---     1) lookup via ASSET DMZR (7 premiers caractères) sur les lignes TOTBAS
+--   (APSQL ou APORA) + COST CENTER différent de TOTBAS :
+--     1) lookup via ASSET DMZR (12 premiers caractères) sur les lignes TOTBAS
 --     2) lookup via MZR DATABASE NAME (égalité exacte, ignoré si NA)
 --     Chaque lookup donne : un code unique, ERROR_MULTIPLE_CODES_APP si
 --     plusieurs codes différents, ou rien si aucune ligne.
@@ -78,16 +78,16 @@ BEGIN
             -- Règle NA
             v_uic := 'APNOCODE_' || r."OFFRE" || '_' || r."METRIQUE DE SERVICE CODE";
 
-        ELSIF UPPER(r."CODE BUSINESS APPLICATION") = 'APSQL'
-          AND UPPER(r."COST CENTER") = 'TOTO2I' THEN
-            -- Règle APSQL + TOTO2I
-            -- 1) lookup via asset (7 premiers caractères) côté TOTBAS
+        ELSIF UPPER(r."CODE BUSINESS APPLICATION") IN ('APSQL', 'APORA')
+          AND UPPER(r."COST CENTER") <> 'TOTBAS' THEN
+            -- Règle (APSQL ou APORA) + cost center différent de TOTBAS
+            -- 1) lookup via asset (12 premiers caractères) côté TOTBAS
             SELECT COUNT(DISTINCT UPPER(t."CODE BUSINESS APPLICATION")),
                    MIN(t."CODE BUSINESS APPLICATION")
               INTO v_cnt1, v_code1
               FROM travail_table t
              WHERE UPPER(t."COST CENTER") = 'TOTBAS'
-               AND UPPER(LEFT(t."ASSET DMZR", 7)) = UPPER(LEFT(r."ASSET DMZR", 7));
+               AND UPPER(LEFT(t."ASSET DMZR", 12)) = UPPER(LEFT(r."ASSET DMZR", 12));
             IF v_cnt1 > 1 THEN
                 v_code1 := 'ERROR_MULTIPLE_CODES_APP';
             ELSIF v_cnt1 = 0 THEN
